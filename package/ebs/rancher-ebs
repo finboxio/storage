@@ -196,7 +196,7 @@ create() {
     if [ "$device_path" == "" ]; then
         print_error All device paths are in use for instance-id: ${INSTANCE_ID}
     fi
-    
+
 
     if [ ! -z "${snapshot_tag}" ]; then
         snapshot=$(find_matching_snapshot "$tag_name" "$snapshot_tag")
@@ -234,7 +234,14 @@ create() {
 
     # don't format the volume if snapshot is set
     if [ -z "${snapshot}" ]; then
-        error=`mkfs.ext4 -F $device_path 2>&1`
+        local fstype
+        local mkfsopts
+
+        fstype=${OPTS[fs-type]:-ext4}
+        if [ "$fstype" !=  "xfs" ]; then
+            mkfsopts="-F"
+        fi
+        error=`mkfs.$fstype $mkfsopts $device_path 2>&1`
         if [ $? -ne 0 ]; then
             print_error $error
         fi
@@ -345,7 +352,10 @@ attach() {
     if [ "$linux_device_path" != "" ]; then
         mountpoint="/var/lib/rancher/volumes/rancher-ebs/${OPTS[name]}-staging"
         mkdir -p ${mountpoint}
-        error=`mount ${linux_device_path} ${mountpoint} 2>&1`
+
+        local fstype
+        fstype=${OPTS[fs-type]:-ext4}
+        error=`mount -t $fstype ${linux_device_path} ${mountpoint} 2>&1`
         if [ $? -ne 0 ]; then
             if [ -z "$(echo $error | grep 'is already mounted')" ]; then
                 print_error $error
