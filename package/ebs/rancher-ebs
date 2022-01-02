@@ -245,6 +245,18 @@ create() {
         if [ $? -ne 0 ]; then
             print_error $error
         fi
+    elif [ "$fstype" != "xfs" ]; then
+        # resize snapshot to disk size
+        error=`resize2fs $device_path 2>&1`
+        if [ $? -ne 0 ]; then
+            print_error $error
+        fi
+    else
+        # resize snapshot to disk size
+        error=`xfs_growfs $device_path 2>&1`
+        if [ $? -ne 0 ]; then
+            print_error $error
+        fi
     fi
 
     do_detach $device_path
