@@ -245,18 +245,6 @@ create() {
         if [ $? -ne 0 ]; then
             print_error $error
         fi
-    elif [ "$fstype" != "xfs" ]; then
-        # resize snapshot to disk size
-        error=`resize2fs $device_path 2>&1`
-        if [ $? -ne 0 ]; then
-            print_error $error
-        fi
-    else
-        # resize snapshot to disk size
-        error=`xfs_growfs $device_path 2>&1`
-        if [ $? -ne 0 ]; then
-            print_error $error
-        fi
     fi
 
     do_detach $device_path
@@ -373,6 +361,21 @@ attach() {
                 print_error $error
             fi
         fi
+
+        if [ "$fstype" != "xfs" ]; then
+            # resize snapshot to disk size
+            error=`resize2fs $linux_device_path 2>&1`
+            if [ $? -ne 0 ]; then
+                print_error $error
+            fi
+        else
+            # resize snapshot to disk size
+            error=`xfs_growfs $mountpoint 2>&1`
+            if [ $? -ne 0 ]; then
+                print_error $error
+            fi
+        fi
+
         cd ${mountpoint}
         if [ -z "$(ls -A | grep -v lost+found | grep -v _rancher-data )" ]; then
             mountdest="${mountpoint}/_rancher-data"
